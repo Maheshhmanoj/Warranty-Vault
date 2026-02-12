@@ -4,21 +4,20 @@
 
 body {
   background-color: #FFFBF0;
+  color: #121212;
 }
 
 @layer components {
   .neo-card {
-    @apply bg-white border-2 border-neo-black shadow-neo rounded-none; 
+    @apply bg-white border-2 border-neo-black shadow-neo rounded-none;
   }
 
   .neo-btn {
-    @apply bg-neo-black text-white font-bold py-2 px-6 border-2 border-neo-black shadow-neo 
-    hover:-translate-y-1 hover:shadow-neo-lg transition-all active:translate-y-0 active:shadow-neo;
+    @apply bg-neo-black text-white font-bold py-2 px-6 border-2 border-neo-black shadow-neo hover:-translate-y-1 hover:shadow-neo-lg transition-all active:translate-y-0 active:shadow-neo;
   }
 
   .neo-btn-secondary {
-    @apply bg-white text-neo-black font-bold py-2 px-6 border-2 border-neo-black shadow-neo 
-    hover:bg-neo-yellow transition-all hover:-translate-y-1;
+    @apply bg-white text-neo-black font-bold py-2 px-6 border-2 border-neo-black shadow-neo hover:bg-neo-yellow transition-all hover:-translate-y-1;
   }
 
   .neo-input {
