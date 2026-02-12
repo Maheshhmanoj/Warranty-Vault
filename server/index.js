@@ -25,6 +25,15 @@ if (!process.env.MONGO_URI) {
   process.exit(1);
 }
 
+const uri = process.env.MONGO_URI;
+console.log("DEBUG: Checking Mongo URI...");
+if (!uri) {
+  console.log("DEBUG: URI is UNDEFINED (Missing)");
+} else {
+  console.log("DEBUG: URI Length:", uri.length);
+  console.log("DEBUG: First 15 chars:", `"${uri.substring(0, 15)}..."`); // Quotes added to see spaces
+}
+
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('✅ MongoDB Connected Successfully'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
