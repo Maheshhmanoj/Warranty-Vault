@@ -15,6 +15,11 @@ app.use(express.json());
 app.use('/api/items', itemRoutes);
 app.use('/api/auth', authRoutes); 
 
+app.use(cors({
+  origin: ["http://localhost:5173", "https://warranty-vault-kappa.vercel.app"],
+  credentials: true
+}));
+
 if (!process.env.MONGO_URI) {
   console.error("FATAL ERROR: MONGO_URI is missing in .env file");
   process.exit(1);
