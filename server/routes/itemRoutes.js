@@ -56,4 +56,29 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+router.put('/:id', auth, async (req, res) => {
+  const { name, category, expiryDate, image } = req.body;
+
+  try {
+    let item = await Item.findById(req.params.id);
+
+    if (!item) return res.status(404).json({ msg: 'Item not found' });
+
+    if (item.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'Not authorized' });
+    }
+
+    item.name = name || item.name;
+    item.category = category || item.category;
+    item.expiryDate = expiryDate || item.expiryDate;
+    item.image = image || item.image;
+
+    await item.save();
+    res.json(item);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 module.exports = router;

@@ -1,10 +1,65 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', 
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', // Fallback for local dev
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+export const setAuthToken = token => {
+  if (token) {
+    api.defaults.headers.common['x-auth-token'] = token;
+    localStorage.setItem('token', token);
+  } else {
+    delete api.defaults.headers.common['x-auth-token'];
+    localStorage.removeItem('token');
+  }
+};
+
+export const loadUser = async () => {
+  const res = await api.get('/auth');
+  return res.data;
+};
+
+export const register = async formData => {
+  const res = await api.post('/users', formData);
+  return res.data;
+};
+
+export const login = async formData => {
+  const res = await api.post('/auth', formData);
+  return res.data;
+};
+
+export const getItems = async () => {
+  const res = await api.get('/items');
+  return res.data;
+};
+
+export const addItem = async formData => {
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  };
+  const res = await api.post('/items', formData, config);
+  return res.data;
+};
+
+export const deleteItem = async id => {
+  const res = await api.delete(`/items/${id}`);
+  return res.data;
+};
+
+export const updateItem = async (id, formData) => {
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data' // Important for images
+    }
+  };
+  const res = await api.put(`/items/${id}`, formData, config);
+  return res.data;
+};
 
 export default api;
