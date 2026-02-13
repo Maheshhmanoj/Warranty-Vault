@@ -1,74 +1,58 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/authMiddleware');
 const Item = require('../models/Item');
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const items = await Item.find().sort({ createdAt: -1 });
+    const items = await Item.find({ user: req.user.id }).sort({ date: -1 });
     res.json(items);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 
-router.post('/add', async (req, res) => {
+router.post('/', auth, async (req, res) => {
+  const { name, category, expiryDate, image } = req.body;
+
   try {
-    const { productName, category, purchaseDate, warrantyMonths, serialNumber, receiptImage } = req.body;
-    
-    const months = Number(warrantyMonths);
-    if (isNaN(months)) throw new Error("Warranty Months must be a number");
-
-    const purchase = new Date(purchaseDate);
-    const expiry = new Date(purchase);
-    expiry.setMonth(expiry.getMonth() + months);
-
-    const today = new Date();
-    const diffTime = expiry - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    let status = 'Active';
-    if (diffDays < 0) status = 'Expired';
-    else if (diffDays <= 30) status = 'Expiring Soon';
-
     const newItem = new Item({
-      productName,
+      name,
       category,
-      purchaseDate,
-      warrantyMonths: months,
-      serialNumber,
-      receiptImage,
-      expiryDate: expiry, 
-      status: status     
+      expiryDate,
+      image,
+      user: req.user.id
     });
 
-    const savedItem = await newItem.save();
-    res.status(201).json(savedItem);
-
+    const item = await newItem.save();
+    res.json(item);
   } catch (err) {
-    console.error("Backend Error:", err.message);
-    res.status(400).json({ message: err.message });
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
-    await Item.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Item Deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    const item = await Item.findById(req.params.id);
 
-router.put('/:id', async (req, res) => {
-  try {
-    const updatedItem = await Item.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
-      { new: true }
-    );
-    res.json(updatedItem);
+    if (!item) {
+      return res.status(404).json({ msg: 'Item not found' });
+    }
+
+    if (item.user.toString() !== req.user.id) {
+      return res.status(401).json({ msg: 'User not authorized' });
+    }
+
+    await item.deleteOne();
+    res.json({ msg: 'Item removed' });
   } catch (err) {
-    res.status(400).json({ message: "Update Failed: " + err.message });
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: 'Item not found' });
+    }
+    res.status(500).send('Server Error');
   }
 });
 
