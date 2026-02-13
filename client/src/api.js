@@ -1,33 +1,10 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-const API = axios.create({ baseURL: API_URL });
-
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', 
+  headers: {
+    'Content-Type': 'application/json'
   }
-  return req;
 });
 
-
-API.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
-
-export const fetchItems = () => API.get('/items');
-export const addItem = (newItem) => API.post('/items/add', newItem);
-export const deleteItem = (id) => API.delete(`/items/${id}`);
-export const updateItem = (id, updatedData) => API.put(`/items/${id}`, updatedData);
-
-export default API;
+export default api;
