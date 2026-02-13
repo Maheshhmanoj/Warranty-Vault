@@ -39,11 +39,8 @@ export const getItems = async () => {
 };
 export const fetchItems = getItems; 
 
-export const addItem = async formData => {
-  const config = {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  };
-  const res = await api.post('/items', formData, config);
+export const addItem = async (itemData) => {
+  const res = await api.post('/items', itemData);
   return res.data;
 };
 
@@ -52,11 +49,8 @@ export const deleteItem = async id => {
   return res.data;
 };
 
-export const updateItem = async (id, formData) => {
-  const config = {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  };
-  const res = await api.put(`/items/${id}`, formData, config);
+export const updateItem = async (id, itemData) => {
+  const res = await api.put(`/items/${id}`, itemData);
   return res.data;
 };
 
