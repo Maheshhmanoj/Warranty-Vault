@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', // Fallback for local dev
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -32,16 +32,16 @@ export const login = async formData => {
   return res.data;
 };
 
+
 export const getItems = async () => {
   const res = await api.get('/items');
   return res.data;
 };
+export const fetchItems = getItems; 
 
 export const addItem = async formData => {
   const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    headers: { 'Content-Type': 'multipart/form-data' }
   };
   const res = await api.post('/items', formData, config);
   return res.data;
@@ -54,9 +54,7 @@ export const deleteItem = async id => {
 
 export const updateItem = async (id, formData) => {
   const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data' // Important for images
-    }
+    headers: { 'Content-Type': 'multipart/form-data' }
   };
   const res = await api.put(`/items/${id}`, formData, config);
   return res.data;
