@@ -1,48 +1,37 @@
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
+const cors = require('cors');
 require('dotenv').config();
 
-const itemRoutes = require('./routes/itemRoutes');
-const authRoutes = require('./routes/authRoutes');
-
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-app.use('/api/items', itemRoutes);
-app.use('/api/auth', authRoutes); 
-
 app.use(cors({
-  origin: ["http://localhost:5173", "https://warranty-vault-kappa.vercel.app"],
+  origin: [
+    "http://localhost:5173",          // Local
+    "https://warranty-vault.vercel.app" // Your Vercel Link
+  ],
   credentials: true
 }));
 
-if (!process.env.MONGO_URI) {
-  console.error("FATAL ERROR: MONGO_URI is missing in .env file");
-  process.exit(1);
-}
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ MongoDB Connected Successfully');
+  } catch (err) {
+    console.error('❌ MongoDB Connection Error:', err.message);
+    process.exit(1);
+  }
+};
+connectDB();
 
-const uri = process.env.MONGO_URI;
-console.log("DEBUG: Checking Mongo URI...");
-if (!uri) {
-  console.log("DEBUG: URI is UNDEFINED (Missing)");
-} else {
-  console.log("DEBUG: URI Length:", uri.length);
-  console.log("DEBUG: First 15 chars:", `"${uri.substring(0, 15)}..."`); // Quotes added to see spaces
-}
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/items', require('./routes/itemRoutes'));
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ MongoDB Connected Successfully'))
-    .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+app.get('/', (req, res) => res.send('API is Running...'));
 
-app.get('/', (req, res) => {
-    res.send('WarrantyVault API is Running');
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
