@@ -11,7 +11,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
   origin: [
     "http://localhost:5173",          // Local
-    "https://warranty-vault.vercel.app" // Your Vercel Link
+    "https://warranty-vault.vercel.app",
+    "https://warranty-vault-kappa.vercel.app"// Your Vercel Link
   ],
   credentials: true
 }));
