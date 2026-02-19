@@ -25,8 +25,12 @@ const Register = () => {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || "REGISTRATION_FAILED";
-      setUiState({ isLoading: false, error: msg });
+      console.error("REGISTRATION ERROR:", err.response?.data?.msg || err.message);
+      
+      dispatch({
+        type: REGISTER_FAIL,
+        payload: err.response?.data?.msg || "Registration Failed"
+      });
     }
   };
 
