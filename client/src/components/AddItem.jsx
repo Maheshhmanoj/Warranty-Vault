@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { addItem } from '../api';
-import { FaCloudUploadAlt, FaSpinner, FaTimes } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaSpinner, FaTimes, FaSearch } from 'react-icons/fa';
+import Tesseract from 'tesseract.js';
 
 const AddItem = ({ onSuccess, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,10 @@ const AddItem = ({ onSuccess, onCancel }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // --- OCR STATES ---
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedText, setScannedText] = useState('');
 
   const { name, category, expiryDate } = formData;
 
@@ -22,6 +27,7 @@ const AddItem = ({ onSuccess, onCancel }) => {
     if (!file) return;
 
     setPreview(URL.createObjectURL(file));
+    setScannedText(''); // Clear previous scans
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -29,6 +35,7 @@ const AddItem = ({ onSuccess, onCancel }) => {
       const img = new Image();
       img.src = event.target.result;
       img.onload = () => {
+        // 1. Compress Image
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 800;
         const scaleSize = MAX_WIDTH / img.width;
@@ -40,6 +47,21 @@ const AddItem = ({ onSuccess, onCancel }) => {
         
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
         setFormData(prev => ({ ...prev, image: compressedBase64 }));
+
+        // 2. Run OCR Scan on the image
+        setIsScanning(true);
+        Tesseract.recognize(
+          compressedBase64,
+          'eng',
+          { logger: m => console.log(m) } // Logs progress to console
+        ).then(({ data: { text } }) => {
+          setScannedText(text);
+          setIsScanning(false);
+        }).catch(err => {
+          console.error("OCR Error:", err);
+          setScannedText("Failed to read text from image.");
+          setIsScanning(false);
+        });
       };
     };
   };
@@ -83,6 +105,54 @@ const AddItem = ({ onSuccess, onCancel }) => {
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div>
+          <label className="block font-black mb-2 uppercase">Upload Receipt / Image</label>
+          <div className="border-4 border-dashed border-black p-8 text-center bg-gray-50 hover:bg-yellow-50 relative transition-colors cursor-pointer mb-4">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            {preview ? (
+              <div>
+                <img 
+                  src={preview} 
+                  alt="Preview" 
+                  className="max-h-48 mx-auto border-4 border-black shadow-neo object-contain bg-white relative z-0" 
+                />
+                <p className="mt-4 font-black text-sm uppercase relative z-0">Click to change</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center relative z-0">
+                <FaCloudUploadAlt size={48} className="mb-2" />
+                <span className="font-black uppercase">Click to upload</span>
+              </div>
+            )}
+          </div>
+
+          {/* OCR SCANNER RESULTS UI */}
+          {(isScanning || scannedText) && (
+            <div className="bg-neo-blue/10 border-4 border-black p-4 shadow-neo">
+              <h3 className="font-black uppercase mb-2 flex items-center gap-2">
+                <FaSearch /> Scanner Vision
+              </h3>
+              {isScanning ? (
+                <div className="flex items-center gap-2 font-bold text-blue-600 animate-pulse">
+                  <FaSpinner className="animate-spin" /> Extracting text from image...
+                </div>
+              ) : (
+                <div className="bg-white border-2 border-black p-2 h-32 overflow-y-auto text-sm font-mono whitespace-pre-wrap">
+                  {scannedText || "No readable text found."}
+                </div>
+              )}
+              <p className="text-[10px] uppercase font-bold text-gray-500 mt-2">
+                Copy/paste details from the scan into your form fields below!
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div>
           <label className="block font-black mb-2 uppercase">Item Name</label>
           <input
             type="text"
@@ -124,37 +194,10 @@ const AddItem = ({ onSuccess, onCancel }) => {
           />
         </div>
 
-        <div>
-          <label className="block font-black mb-2 uppercase">Upload Image</label>
-          <div className="border-4 border-dashed border-black p-8 text-center bg-gray-50 hover:bg-yellow-50 relative transition-colors cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            {preview ? (
-              <div>
-                <img 
-                  src={preview} 
-                  alt="Preview" 
-                  className="max-h-48 mx-auto border-4 border-black shadow-neo object-contain bg-white" 
-                />
-                <p className="mt-4 font-black text-sm uppercase">Click to change</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <FaCloudUploadAlt size={48} className="mb-2" />
-                <span className="font-black uppercase">Click to upload</span>
-              </div>
-            )}
-          </div>
-        </div>
-
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-neo-yellow hover:bg-yellow-400 border-4 border-black text-black font-black py-4 flex justify-center items-center shadow-neo transition-transform hover:-translate-y-1 text-xl uppercase"
+          disabled={loading || isScanning}
+          className="w-full bg-neo-yellow hover:bg-yellow-400 border-4 border-black text-black font-black py-4 flex justify-center items-center shadow-neo transition-transform hover:-translate-y-1 text-xl uppercase disabled:opacity-50"
         >
           {loading ? <FaSpinner className="animate-spin" /> : 'Save To Vault'}
         </button>
