@@ -7,6 +7,17 @@ const api = axios.create({
   }
 });
 
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['x-auth-token'] = token;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const setAuthToken = token => {
   if (token) {
     api.defaults.headers.common['x-auth-token'] = token;
@@ -32,12 +43,12 @@ export const login = async formData => {
   return res.data;
 };
 
-
 export const getItems = async () => {
   const res = await api.get('/items');
   return res.data;
 };
-export const fetchItems = getItems; 
+
+export const fetchItems = getItems;
 
 export const addItem = async (itemData) => {
   const res = await api.post('/items', itemData);
