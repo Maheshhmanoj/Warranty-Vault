@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import AddItem from './AddItem';
 import { fetchItems, deleteItem } from '../api';
-import { FaTrash, FaCalendarAlt, FaPen, FaSortAmountDown, FaFilter } from 'react-icons/fa';
+import { FaTrash, FaCalendarAlt, FaPen, FaSortAmountDown, FaFilter, FaPlus, FaTimes } from 'react-icons/fa';
 
 const Dashboard = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadItems();
@@ -15,7 +17,6 @@ const Dashboard = () => {
   const loadItems = async () => {
     try {
       const data = await fetchItems();
-      
       if (Array.isArray(data)) {
         setItems(data);
       } else {
@@ -37,53 +38,108 @@ const Dashboard = () => {
     }
   };
 
+  const filteredItems = items.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
       <Navbar />
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-black mb-8 border-b-4 border-neo-yellow inline-block">
-          MY VAULT
-        </h2>
+        
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <h2 className="text-3xl md:text-5xl font-black border-b-4 border-neo-yellow inline-block uppercase">
+            My Vault
+          </h2>
+          <button 
+            onClick={() => setShowAdd(!showAdd)}
+            className="bg-neo-yellow hover:bg-yellow-400 text-black font-black py-3 px-6 border-4 border-black shadow-neo flex items-center gap-2 transition-transform hover:-translate-y-1"
+          >
+            {showAdd ? <FaTimes /> : <FaPlus />} 
+            {showAdd ? 'CLOSE' : 'ADD NEW ITEM'}
+          </button>
+        </div>
 
-        {loading ? (
-          <div className="text-center font-bold text-xl">Loading your items...</div>
-        ) : !Array.isArray(items) || items.length === 0 ? (
-          <div className="neo-card p-8 text-center">
-            <p className="font-bold text-xl mb-4">No items in your vault yet.</p>
+        {showAdd && (
+          <div className="mb-12 border-4 border-black p-4 bg-white shadow-neo">
+            <AddItem />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
-              <div key={item._id || Math.random()} className="neo-card p-6 flex flex-col">
-                {item.image && (
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-full h-48 object-cover border-2 border-black mb-4 shadow-neo"
-                  />
-                )}
-                <h3 className="text-2xl font-black mb-2 uppercase">{item.name}</h3>
-                <p className="font-bold mb-2 flex items-center gap-2">
-                  <span className="bg-neo-yellow px-2 py-1 border-2 border-black text-sm">
-                    {item.category}
-                  </span>
-                </p>
-                <p className="font-bold mb-4 flex items-center gap-2">
-                  <FaCalendarAlt /> 
-                  {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'No Date'}
-                </p>
-                
-                <div className="mt-auto flex justify-between gap-2">
-                  <button 
-                    onClick={() => handleDelete(item._id)}
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 border-2 border-black shadow-neo flex items-center gap-2 w-full justify-center transition-transform hover:-translate-y-1"
-                  >
-                    <FaTrash /> DELETE
-                  </button>
-                </div>
+        )}
+
+        {!showAdd && (
+          <>
+            <div className="mb-8 flex flex-col md:flex-row gap-4 bg-white p-4 border-4 border-black shadow-neo">
+              <div className="flex-1 flex items-center gap-2 border-2 border-black p-2">
+                <FaFilter className="text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search items or categories..." 
+                  className="w-full outline-none font-bold"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            ))}
-          </div>
+              <button className="bg-gray-200 border-2 border-black px-4 py-2 font-bold flex items-center gap-2 hover:bg-gray-300">
+                <FaSortAmountDown /> SORT
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="text-center font-black text-2xl py-12 border-4 border-black shadow-neo bg-white">
+                LOADING YOUR VAULT...
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="neo-card p-12 text-center bg-white border-4 border-black shadow-neo">
+                <p className="font-black text-2xl mb-4">NO ITEMS FOUND</p>
+                <p className="font-bold">Your vault is empty or no items match your search.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredItems.map((item) => (
+                  <div key={item._id || Math.random()} className="bg-white border-4 border-black shadow-neo p-6 flex flex-col hover:-translate-y-2 transition-transform duration-200">
+                    {item.image ? (
+                      <div className="w-full h-56 border-4 border-black mb-4 overflow-hidden bg-gray-100">
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-56 border-4 border-black mb-4 bg-gray-100 flex items-center justify-center">
+                        <span className="font-black text-gray-400">NO IMAGE</span>
+                      </div>
+                    )}
+                    <h3 className="text-2xl font-black mb-2 uppercase truncate" title={item.name}>{item.name}</h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="bg-neo-yellow px-3 py-1 border-2 border-black font-black text-sm uppercase">
+                        {item.category}
+                      </span>
+                    </div>
+                    <p className="font-bold mb-6 flex items-center gap-2 text-lg">
+                      <FaCalendarAlt /> 
+                      {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'No Expiry Date'}
+                    </p>
+                    
+                    <div className="mt-auto flex justify-between gap-3">
+                      <button 
+                        className="flex-1 bg-white hover:bg-gray-100 text-black font-black py-2 px-4 border-2 border-black flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <FaPen /> EDIT
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item._id)}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-2 px-4 border-2 border-black flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <FaTrash /> DELETE
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
