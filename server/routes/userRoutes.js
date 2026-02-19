@@ -4,8 +4,19 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// @route   POST api/users
 router.post('/', async (req, res) => {
   const { name, email, password } = req.body;
+
+  // --- PASSWORD SECURITY CHECK ---
+  // Requires: At least 6 characters, 1 Capital Letter, 1 Special Character
+  const strongPasswordRegex = /^(?=.*[A-Z])(?=.*[!@#$&*]).{6,}$/;
+  
+  if (!strongPasswordRegex.test(password)) {
+    return res.status(400).json({ 
+      msg: 'Password must be at least 6 characters and include 1 capital letter and 1 special character (!@#$&*).' 
+    });
+  }
 
   try {
     let user = await User.findOne({ email });
