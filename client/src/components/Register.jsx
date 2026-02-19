@@ -17,6 +17,16 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const strongPasswordRegex = /^(?=.*[A-Z])(?=.*[!@#$&*]).{6,}$/;
+    if (!strongPasswordRegex.test(formData.password)) {
+      setUiState({ 
+        isLoading: false, 
+        error: 'PASSWORD REJECTED: Must be 6+ chars, 1 Capital, 1 Special (!@#$&*).' 
+      });
+      return;
+    }
+
     setUiState({ isLoading: true, error: null });
 
     try {
@@ -27,9 +37,9 @@ const Register = () => {
     } catch (err) {
       console.error("REGISTRATION ERROR:", err.response?.data?.msg || err.message);
       
-      dispatch({
-        type: REGISTER_FAIL,
-        payload: err.response?.data?.msg || "Registration Failed"
+      setUiState({
+        isLoading: false,
+        error: err.response?.data?.msg || "Registration Failed"
       });
     }
   };
@@ -69,7 +79,7 @@ const Register = () => {
               required 
               autoComplete="name"
               onChange={handleChange}
-              className="neo-input"
+              className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="JOHN_DOE"
             />
           </div>
@@ -82,7 +92,7 @@ const Register = () => {
               required 
               autoComplete="email"
               onChange={handleChange}
-              className="neo-input"
+              className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="USER@EXAMPLE.COM"
             />
           </div>
@@ -96,16 +106,16 @@ const Register = () => {
               autoComplete="new-password"
               minLength={6}
               onChange={handleChange}
-              className="neo-input"
+              className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="••••••••"
             />
-            <p className="text-[10px] font-mono text-gray-500 mt-1 text-right">MIN_LENGTH: 6_CHARS</p>
+            <p className="text-[10px] font-mono text-gray-500 mt-1 text-right">MIN_LENGTH: 6_CHARS | 1_CAP | 1_SPECIAL</p>
           </div>
 
           <button 
             type="submit" 
             disabled={uiState.isLoading}
-            className="neo-btn w-full bg-neo-black text-white hover:bg-neo-green hover:text-black flex justify-center items-center gap-2 mt-4"
+            className="neo-btn w-full bg-neo-black text-white hover:bg-neo-green hover:text-black flex justify-center items-center gap-2 mt-4 py-4 font-bold border-4 border-black transition-transform hover:-translate-y-1 shadow-neo"
           >
             {uiState.isLoading ? <FaSpinner className="animate-spin" /> : "EXECUTE_SIGNUP"}
           </button>
