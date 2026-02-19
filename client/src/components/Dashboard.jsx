@@ -84,6 +84,26 @@ const Dashboard = () => {
     setIsModalOpen(true);
   }
 
+  const loadDashboardItems = async () => {
+    try {
+      const data = await fetchItems();
+      console.log("SERVER GAVE US:", data); 
+      
+      if (Array.isArray(data)) {
+        setItems(data);
+      } else {
+        setItems([]); 
+      }
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+      setItems([]); 
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardItems();
+  }, []);
+
   return (
     <div className="min-h-screen pb-20 bg-neo-bg">
       <Navbar onAddClick={handleAddClick} onSearch={setSearchQuery} />
