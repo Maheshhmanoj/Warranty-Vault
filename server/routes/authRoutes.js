@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator'); 
 const User = require('../models/User');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client("111197729106-l6jor6ri45pvhld9sfahjc0lcgun4v8l.apps.googleusercontent.com");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -63,6 +65,45 @@ router.post('/login', [
     res.json({ token, user: { id: user._id, username: user.username, email: user.email } });
   } catch (err) {
     res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+router.post('/google', async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: "111197729106-l6jor6ri45pvhld9sfahjc0lcgun4v8l.apps.googleusercontent.com"
+    });
+    
+    const { name, email, sub: googleId } = ticket.getPayload();
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        password: googleId 
+      });
+      await user.save();
+    }
+
+    const payload = { user: { id: user.id } };
+    
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: 360000 },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error("Google Auth Error:", err);
+    res.status(401).json({ msg: 'Google Authentication Failed on Server' });
   }
 });
 
