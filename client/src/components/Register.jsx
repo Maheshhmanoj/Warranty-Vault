@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaUserPlus, FaSpinner, FaExclamationTriangle, FaIdCard } from 'react-icons/fa';
+import { FaSpinner, FaExclamationTriangle, FaIdCard } from 'react-icons/fa';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -35,12 +36,25 @@ const Register = () => {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      console.error("REGISTRATION ERROR:", err.response?.data?.msg || err.message);
-      
       setUiState({
         isLoading: false,
         error: err.response?.data?.msg || "Registration Failed"
       });
+    }
+  };
+
+  // --- GOOGLE SIGNUP LOGIC ---
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setUiState({ isLoading: true, error: null });
+      const res = await axios.post(`${API_URL}/auth/google`, {
+        token: credentialResponse.credential
+      });
+      
+      localStorage.setItem('token', res.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+      setUiState({ isLoading: false, error: "Google Authentication Failed" });
     }
   };
 
@@ -74,11 +88,7 @@ const Register = () => {
           <div>
             <label className="block font-mono text-xs font-bold uppercase mb-1">Full Name</label>
             <input 
-              name="username" 
-              type="text" 
-              required 
-              autoComplete="name"
-              onChange={handleChange}
+              name="username" type="text" required autoComplete="name" onChange={handleChange}
               className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="JOHN_DOE"
             />
@@ -87,11 +97,7 @@ const Register = () => {
           <div>
             <label className="block font-mono text-xs font-bold uppercase mb-1">Email Address</label>
             <input 
-              name="email" 
-              type="email" 
-              required 
-              autoComplete="email"
-              onChange={handleChange}
+              name="email" type="email" required autoComplete="email" onChange={handleChange}
               className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="USER@EXAMPLE.COM"
             />
@@ -100,12 +106,7 @@ const Register = () => {
           <div>
             <label className="block font-mono text-xs font-bold uppercase mb-1">Password</label>
             <input 
-              name="password" 
-              type="password" 
-              required 
-              autoComplete="new-password"
-              minLength={6}
-              onChange={handleChange}
+              name="password" type="password" required autoComplete="new-password" minLength={6} onChange={handleChange}
               className="neo-input w-full border-4 border-black p-3 outline-none focus:bg-yellow-50 font-bold"
               placeholder="••••••••"
             />
@@ -113,15 +114,30 @@ const Register = () => {
           </div>
 
           <button 
-            type="submit" 
-            disabled={uiState.isLoading}
-            className="neo-btn w-full bg-neo-black text-white hover:bg-neo-green hover:text-black flex justify-center items-center gap-2 mt-4 py-4 font-bold border-4 border-black transition-transform hover:-translate-y-1 shadow-neo"
+            type="submit" disabled={uiState.isLoading}
+            className="w-full bg-neo-black text-white hover:bg-neo-green hover:text-black flex justify-center items-center gap-2 mt-4 py-4 font-bold border-4 border-black transition-transform hover:-translate-y-1 shadow-neo uppercase"
           >
             {uiState.isLoading ? <FaSpinner className="animate-spin" /> : "EXECUTE_SIGNUP"}
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t-2 border-neo-black text-center font-mono text-xs">
+        <div className="relative flex items-center justify-center my-6">
+          <div className="border-t-4 border-black w-full"></div>
+          <span className="bg-white px-4 absolute font-black uppercase text-sm">OR</span>
+        </div>
+
+        {/* GOOGLE BUTTON PORTAL */}
+        <div className="flex justify-center mb-6 border-4 border-black p-1 shadow-neo hover:-translate-y-1 transition-transform bg-white">
+          <GoogleLogin 
+            onSuccess={handleGoogleSuccess} 
+            onError={() => setUiState({ error: "Google popup closed or failed." })}
+            theme="filled_black"
+            size="large"
+            width="100%"
+          />
+        </div>
+
+        <div className="pt-6 border-t-2 border-neo-black text-center font-mono text-xs">
           <p className="mb-2">ALREADY_REGISTERED?</p>
           <Link to="/login" className="font-bold underline decoration-2 hover:bg-neo-blue hover:no-underline px-1 transition-colors">
             ACCESS_EXISTING_ACCOUNT
