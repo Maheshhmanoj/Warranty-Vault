@@ -9,9 +9,16 @@ module.exports = function(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user;
+    
+    req.user = decoded.user || { id: decoded.id || decoded._id }; 
+    
+    if (!req.user.id) {
+        return res.status(401).json({ msg: 'Token format invalid, missing user ID' });
+    }
+
     next();
   } catch (err) {
+    console.error("Middleware Error:", err.message);
     res.status(401).json({ msg: 'Token is not valid' });
   }
 };
