@@ -62,8 +62,14 @@ const Dashboard = () => {
         </div>
 
         {showAdd && (
-          <div className="mb-12 border-4 border-black p-4 bg-white shadow-neo">
-            <AddItem />
+          <div className="mb-12 border-4 border-black p-8 bg-white shadow-neo">
+            <AddItem 
+              onSuccess={() => {
+                setShowAdd(false);
+                loadItems();
+              }}
+              onCancel={() => setShowAdd(false)}
+            />
           </div>
         )}
 
